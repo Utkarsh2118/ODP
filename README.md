@@ -1,4 +1,4 @@
-# 💸 Online Donation Platform
+*💸 Online Donation Platform*
 
 An Online Donation Platform built using the MERN stack (MongoDB, Express, React, Node.js) that allows users to donate to various charities and causes in a secure and transparent manner.
 
