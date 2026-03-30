@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DonateSphere Dashboard</title>
+    <link rel="stylesheet" href="assets/css/styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    />
+  </head>
+  <body class="dash-page">
+    <div class="dash-shell">
+      <aside class="dash-sidebar" id="dash-sidebar">
+        <a class="dash-brand" href="index.html">
+          <i class="fa-solid fa-hand-holding-heart"></i>
+          <span>DonateSphere</span>
+        </a>
+
+        <nav class="dash-nav">
+          <a class="dash-nav-item active" href="dashboard.html">
+            <i class="fa-solid fa-table-columns"></i>
+            <span>Dashboard</span>
+          </a>
+          <a class="dash-nav-item" href="donations.html">
+            <i class="fa-solid fa-receipt"></i>
+            <span>My Donations</span>
+          </a>
+          <a class="dash-nav-item" href="index.html">
+            <i class="fa-solid fa-bullseye"></i>
+            <span>Campaigns</span>
+          </a>
+          <a class="dash-nav-item" href="profile.html">
+            <i class="fa-solid fa-user"></i>
+            <span>Profile</span>
+          </a>
+        </nav>
+
+        <button class="dash-logout side" id="side-logout-btn" type="button">
+          <i class="fa-solid fa-right-from-bracket"></i>
+          <span>Logout</span>
+        </button>
+      </aside>
+
+      <div class="dash-main">
+        <header class="dash-topbar">
+          <div class="dash-topbar-left">
+            <button id="sidebar-toggle" class="icon-btn" type="button" aria-label="Toggle sidebar">
+              <i class="fa-solid fa-bars"></i>
+            </button>
+            <div>
+              <h1>My Dashboard</h1>
+              <p>Track your impact in one place</p>
+            </div>
+          </div>
+
+          <div class="dash-topbar-right">
+            <button id="theme-toggle" class="icon-btn" type="button" aria-label="Toggle dark mode">
+              <i class="fa-solid fa-moon"></i>
+            </button>
+            <button class="icon-btn" type="button" aria-label="Notifications">
+              <i class="fa-regular fa-bell"></i>
+            </button>
+
+            <div class="user-pill">
+              <div class="avatar" id="top-user-avatar">R</div>
+              <span id="top-user-name">Ramji</span>
+            </div>
+
+            <button class="dash-logout top" id="top-logout-btn" type="button">Logout</button>
+          </div>
+        </header>
+
+        <main class="dash-content">
+          <section class="dash-kpis" id="overview-section">
+            <article class="kpi-card">
+              <div class="kpi-icon money"><i class="fa-solid fa-indian-rupee-sign"></i></div>
+              <div>
+                <p>Total Donated</p>
+                <h3 id="kpi-total-donated">INR 0</h3>
+              </div>
+            </article>
+
+            <article class="kpi-card">
+              <div class="kpi-icon campaigns"><i class="fa-solid fa-bullseye"></i></div>
+              <div>
+                <p>Campaigns Supported</p>
+                <h3 id="kpi-campaigns-supported">0</h3>
+              </div>
+            </article>
+
+            <article class="kpi-card">
+              <div class="kpi-icon tx"><i class="fa-solid fa-receipt"></i></div>
+              <div>
+                <p>Total Transactions</p>
+                <h3 id="kpi-transactions">0</h3>
+              </div>
+            </article>
+          </section>
+
+          <section class="panel dash-panel">
+            <div class="panel-head">
+              <h2>Quick Actions</h2>
+            </div>
+            <div class="dash-quick-actions">
+              <a href="donations.html" class="btn btn-outline btn-press">
+                <i class="fa-solid fa-receipt"></i> View Donations
+              </a>
+              <a href="profile.html" class="btn btn-outline btn-press">
+                <i class="fa-solid fa-user"></i> Manage Profile
+              </a>
+              <a href="index.html" class="btn btn-primary btn-press">
+                <i class="fa-solid fa-bullseye"></i> Explore Campaigns
+              </a>
+            </div>
+          </section>
+
+          <section class="dash-lower-grid">
+            <article class="panel dash-panel">
+              <h2>Campaign Progress</h2>
+              <div id="campaign-progress-list" class="progress-list"></div>
+            </article>
+
+            <article class="panel dash-panel">
+              <h2>Recent Activity</h2>
+              <ul id="recent-activity-list" class="activity-list"></ul>
+            </article>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/auth.js"></script>
+    <script src="assets/js/dashboard.js"></script>
+  </body>
+</html>

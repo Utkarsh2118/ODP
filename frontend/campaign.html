@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Campaign Details</title>
+    <link rel="stylesheet" href="assets/css/styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    />
+  </head>
+  <body class="dash-page campaign-page">
+    <div class="dash-shell">
+      <aside class="dash-sidebar" id="dash-sidebar">
+        <a class="dash-brand" href="index.html">
+          <i class="fa-solid fa-hand-holding-heart"></i>
+          <span>DonateSphere</span>
+        </a>
+
+        <nav class="dash-nav">
+          <a class="dash-nav-item" href="dashboard.html">
+            <i class="fa-solid fa-table-columns"></i>
+            <span>Dashboard</span>
+          </a>
+          <a class="dash-nav-item" href="dashboard.html#donation-history-section">
+            <i class="fa-solid fa-receipt"></i>
+            <span>My Donations</span>
+          </a>
+          <a class="dash-nav-item active" href="index.html">
+            <i class="fa-solid fa-bullseye"></i>
+            <span>Campaigns</span>
+          </a>
+          <a class="dash-nav-item" href="dashboard.html#profile">
+            <i class="fa-solid fa-user"></i>
+            <span>Profile</span>
+          </a>
+        </nav>
+
+        <button class="dash-logout side" id="side-logout-btn" type="button">
+          <i class="fa-solid fa-right-from-bracket"></i>
+          <span>Logout</span>
+        </button>
+      </aside>
+
+      <div class="dash-main">
+        <header class="dash-topbar">
+          <div class="dash-topbar-left">
+            <button id="sidebar-toggle" class="icon-btn" type="button" aria-label="Toggle sidebar">
+              <i class="fa-solid fa-bars"></i>
+            </button>
+            <div>
+              <h1>Campaign Details</h1>
+              <p>Secure contribution and transparent tracking</p>
+            </div>
+          </div>
+
+          <div class="dash-topbar-right">
+            <button id="theme-toggle" class="icon-btn" type="button" aria-label="Toggle dark mode">
+              <i class="fa-solid fa-moon"></i>
+            </button>
+            <div class="user-pill">
+              <div class="avatar" id="top-user-avatar">U</div>
+              <span id="top-user-name">User</span>
+            </div>
+            <button class="dash-logout top" id="top-logout-btn" type="button">Logout</button>
+          </div>
+        </header>
+
+        <main class="dash-content">
+          <div id="campaign-detail"></div>
+        </main>
+      </div>
+    </div>
+
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/auth.js"></script>
+    <script src="assets/js/campaign.js"></script>
+  </body>
+</html>
