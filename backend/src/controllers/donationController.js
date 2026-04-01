@@ -1,6 +1,7 @@
 const crypto = require("crypto");
 const { body, param } = require("express-validator");
 const { getRazorpayClient, isRazorpayConfigured } = require("../config/razorpay");
+const { sendDonationReceipt, isMailerConfigured } = require("../config/mailer");
 const Campaign = require("../models/Campaign");
 const Donation = require("../models/Donation");
 const User = require("../models/User");
@@ -136,6 +137,28 @@ const verifyPayment = async (req, res) => {
       transactionId: donation.razorpayPaymentId,
     };
 
+    // Send receipt email
+    if (isMailerConfigured()) {
+      try {
+        const receiptBuffer = await generateReceiptBuffer({
+          donation,
+          user,
+          campaign,
+        });
+
+        await sendDonationReceipt({
+          toEmail: user.email,
+          userName: user.name,
+          receiptBuffer,
+          campaignTitle: campaign.title,
+          amount: `${donation.currency} ${donation.amount}`,
+        });
+      } catch (mailError) {
+        console.error("Error sending receipt email:", mailError);
+        // Don't fail the payment verification if email fails
+      }
+    }
+
     return res.status(200).json({
       success: true,
       message: "Payment verified and donation recorded",
@@ -195,7 +218,7 @@ const getAllDonations = async (req, res) => {
 
 const reviewManualDonation = async (req, res) => {
   const { action } = req.body;
-  const donation = await Donation.findById(req.params.id).populate("campaign");
+  const donation = await Donation.findById(req.params.id).populate("campaign").populate("user", "name email");
 
   if (!donation) {
     return res.status(404).json({ success: false, message: "Donation not found" });
@@ -221,6 +244,28 @@ const reviewManualDonation = async (req, res) => {
     if (campaign) {
       campaign.fundsRaised += Number(donation.amount);
       await campaign.save();
+    }
+
+    // Send receipt email for approved manual donation
+    if (isMailerConfigured()) {
+      try {
+        const receiptBuffer = await generateReceiptBuffer({
+          donation,
+          user: donation.user,
+          campaign: donation.campaign,
+        });
+
+        await sendDonationReceipt({
+          toEmail: donation.user.email,
+          userName: donation.user.name,
+          receiptBuffer,
+          campaignTitle: donation.campaign.title,
+          amount: `${donation.currency} ${donation.amount}`,
+        });
+      } catch (mailError) {
+        console.error("Error sending receipt email:", mailError);
+        // Don't fail the approval if email fails
+      }
     }
   }
 
