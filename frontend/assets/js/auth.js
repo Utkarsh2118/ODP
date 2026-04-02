@@ -35,6 +35,20 @@ function renderNavAuth() {
   const navSlot = document.getElementById("nav-auth-slot");
   if (!navSlot) return;
 
+  const isHomePage = document.body.classList.contains("campaigns-page");
+
+  if (isHomePage) {
+    navSlot.innerHTML = `
+      <a href="auth.html" class="nav-btn" id="login-btn">
+        <i class="fas fa-sign-in-alt"></i> Login
+      </a>
+      <a href="auth.html" class="nav-btn nav-logout" id="signup-btn">
+        <i class="fas fa-user-plus"></i> Sign Up
+      </a>
+    `;
+    return;
+  }
+
   const user = getCurrentUser();
   const adminLinks = document.querySelectorAll('a[href="admin.html"]');
   const dashboardLinks = document.querySelectorAll('a[href="dashboard.html"]');
