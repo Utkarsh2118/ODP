@@ -40,7 +40,7 @@ function renderNavAuth() {
   if (isHomePage) {
     navSlot.innerHTML = `
       <a href="auth.html" class="nav-btn" id="login-btn">
-        <i class="fas fa-sign-in-alt"></i> Login
+        <i class="fas fa-right-to-bracket"></i> Login
       </a>
       <a href="auth.html" class="nav-btn nav-logout" id="signup-btn">
         <i class="fas fa-user-plus"></i> Sign Up
