@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard - DonateSphere</title>
+    <link rel="stylesheet" href="assets/css/styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      .admin-content .admin-section {
+        display: none;
+      }
+
+      .admin-content #overview-section {
+        display: block;
+      }
+    </style>
+  </head>
+  <body class="admin-dashboard-page">
+    <div class="admin-shell">
+      <aside class="admin-sidebar" id="admin-sidebar">
+        <a class="admin-brand" href="index.html">
+          <i class="fa-solid fa-hand-holding-heart"></i>
+          <span>DonateSphere</span>
+        </a>
+
+        <nav class="admin-nav" id="admin-nav">
+          <a class="admin-nav-item active" href="admin.html">
+            <i class="fa-solid fa-chart-line"></i>
+            <span>Dashboard Overview</span>
+          </a>
+          <a class="admin-nav-item" href="admin-create.html">
+            <i class="fa-solid fa-plus"></i>
+            <span>Create Campaign</span>
+          </a>
+          <a class="admin-nav-item" href="admin-campaigns.html">
+            <i class="fa-solid fa-folder-open"></i>
+            <span>Manage Campaigns</span>
+          </a>
+          <a class="admin-nav-item" href="admin-donations.html">
+            <i class="fa-solid fa-receipt"></i>
+            <span>Donations</span>
+          </a>
+        </nav>
+
+        <button class="admin-side-logout" id="side-logout-btn" type="button">
+          <i class="fa-solid fa-right-from-bracket"></i>
+          <span>Logout</span>
+        </button>
+      </aside>
+
+      <div class="admin-main-wrap">
+        <header class="admin-topbar">
+          <div class="admin-topbar-left">
+            <button class="icon-btn" id="sidebar-toggle" type="button" aria-label="Toggle sidebar">
+              <i class="fa-solid fa-bars"></i>
+            </button>
+            <div>
+              <h1>Admin Dashboard</h1>
+              <p>Manage campaigns, users, and donations efficiently.</p>
+            </div>
+          </div>
+
+          <div class="admin-topbar-right">
+            <span class="admin-role-badge">ADMIN</span>
+            <div class="admin-profile-pill">
+              <div class="admin-avatar" id="admin-avatar">A</div>
+              <span id="admin-name">Admin</span>
+            </div>
+            <button class="btn btn-primary" id="top-logout-btn" type="button">Logout</button>
+          </div>
+        </header>
+
+        <main class="admin-content">
+          <section class="admin-section" id="overview-section">
+            <div class="admin-kpi-grid">
+              <article class="admin-kpi-card">
+                <div class="kpi-icon funds"><i class="fa-solid fa-indian-rupee-sign"></i></div>
+                <div>
+                  <strong id="kpi-total-funds">INR 0</strong>
+                  <span>Total Funds Raised</span>
+                </div>
+              </article>
+
+              <article class="admin-kpi-card">
+                <div class="kpi-icon campaigns"><i class="fa-solid fa-bullseye"></i></div>
+                <div>
+                  <strong id="kpi-total-campaigns">0</strong>
+                  <span>Total Campaigns</span>
+                </div>
+              </article>
+
+              <article class="admin-kpi-card">
+                <div class="kpi-icon users"><i class="fa-solid fa-users"></i></div>
+                <div>
+                  <strong id="kpi-total-users">0</strong>
+                  <span>Total Users</span>
+                </div>
+              </article>
+
+              <article class="admin-kpi-card">
+                <div class="kpi-icon donations"><i class="fa-solid fa-chart-column"></i></div>
+                <div>
+                  <strong id="kpi-total-donations">0</strong>
+                  <span>Total Donations</span>
+                </div>
+              </article>
+            </div>
+
+            <article class="panel admin-chart-panel">
+              <div class="panel-head">
+                <h2>Campaign Analytics</h2>
+                <p>Top campaigns by funds raised</p>
+              </div>
+              <div class="analytics-bars" id="campaign-analytics-bars"></div>
+            </article>
+          </section>
+
+          <section class="admin-section" id="create-section">
+            <article class="panel">
+              <div class="panel-head">
+                <h2>Create Campaign</h2>
+                <p>Launch and monitor new campaigns quickly.</p>
+              </div>
+
+              <form id="campaign-form" class="admin-campaign-form">
+                <div class="field">
+                  <label for="title">Campaign Title</label>
+                  <div class="field-control">
+                    <i class="fa-solid fa-heading"></i>
+                    <input id="title" placeholder="Enter campaign title" required />
+                  </div>
+                </div>
+
+                <div class="field">
+                  <label for="goal">Goal Amount (INR)</label>
+                  <div class="field-control">
+                    <i class="fa-solid fa-indian-rupee-sign"></i>
+                    <input id="goal" type="number" min="1" placeholder="e.g. 500000" required />
+                  </div>
+                </div>
+
+                <div class="field field-full">
+                  <label for="description">Description</label>
+                  <div class="field-control textarea-control">
+                    <i class="fa-solid fa-align-left"></i>
+                    <textarea id="description" rows="4" placeholder="Describe the campaign purpose" required></textarea>
+                  </div>
+                </div>
+
+                <div class="field field-full">
+                  <label for="image">Image URL (optional)</label>
+                  <div class="field-control">
+                    <i class="fa-solid fa-image"></i>
+                    <input id="image" type="url" placeholder="https://example.com/image.jpg" />
+                  </div>
+                </div>
+
+                <div class="image-preview-wrap field-full" id="image-preview-wrap">
+                  <img id="image-preview" alt="Campaign preview" />
+                  <span id="image-preview-empty">Image preview will appear here</span>
+                </div>
+
+                <div class="form-actions field-full">
+                  <button class="btn btn-primary create-btn" id="create-campaign-btn" type="submit">
+                    <span class="spinner is-hidden" id="create-spinner"></span>
+                    <span id="create-btn-text">Create Campaign</span>
+                  </button>
+                </div>
+
+                <p id="campaign-message" class="message"></p>
+              </form>
+            </article>
+          </section>
+
+          <section class="admin-section" id="campaigns-section">
+            <article class="panel">
+              <div class="panel-head table-head-wrap">
+                <div>
+                  <h2>Campaign Management</h2>
+                  <p>Edit campaign details or remove inactive campaigns.</p>
+                </div>
+                <div class="table-search-wrap">
+                  <i class="fa-solid fa-magnifying-glass"></i>
+                  <input id="campaign-search" placeholder="Search campaigns..." />
+                </div>
+              </div>
+
+              <div class="table-wrap admin-table-wrap">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Campaign</th>
+                      <th>Goal</th>
+                      <th>Raised</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="admin-campaigns"></tbody>
+                </table>
+              </div>
+
+              <div class="table-pagination">
+                <button id="campaign-prev" class="btn btn-outline" type="button">Previous</button>
+                <span id="campaign-page-info">Page 1</span>
+                <button id="campaign-next" class="btn btn-outline" type="button">Next</button>
+              </div>
+            </article>
+          </section>
+
+          <section class="admin-section" id="donations-section">
+            <article class="panel">
+              <div class="panel-head">
+                <h2>All Donations</h2>
+                <p>Track all transactions and approve pending manual payments.</p>
+              </div>
+
+              <div class="table-wrap admin-table-wrap">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Donor</th>
+                      <th>Campaign</th>
+                      <th>Amount</th>
+                      <th>Date</th>
+                      <th>Payment</th>
+                      <th>Status</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="admin-donations"></tbody>
+                </table>
+              </div>
+            </article>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <div class="admin-toast" id="admin-toast" role="status" aria-live="polite"></div>
+
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/auth.js"></script>
+    <script src="assets/js/admin.js"></script>
+  </body>
+</html>
