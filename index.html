@@ -4,10 +4,16 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>DonateSphere</title>
-    <meta http-equiv="refresh" content="0; url=./frontend/index.html" />
+    <script>
+      (function () {
+        var parts = window.location.pathname.split("/").filter(Boolean);
+        var basePath = parts.length ? "/" + parts[0] + "/" : "/";
+        window.location.replace(basePath + "frontend/index.html");
+      })();
+    </script>
   </head>
   <body>
     <p>Redirecting to DonateSphere...</p>
-    <p><a href="./frontend/index.html">Click here if you are not redirected.</a></p>
+    <p><a href="/ODP/frontend/index.html">Click here if you are not redirected.</a></p>
   </body>
 </html>
