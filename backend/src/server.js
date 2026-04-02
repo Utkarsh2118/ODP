@@ -1,7 +1,6 @@
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
-const path = require("path");
 const connectDB = require("./config/db");
 
 const authRoutes = require("./routes/authRoutes");
@@ -9,18 +8,23 @@ const campaignRoutes = require("./routes/campaignRoutes");
 const donationRoutes = require("./routes/donationRoutes");
 const userRoutes = require("./routes/userRoutes");
 
-dotenv.config({ path: path.resolve(__dirname, "../.env") });
+dotenv.config(); // ✅ FIXED
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(
   cors({
-    origin: process.env.CLIENT_URL ? process.env.CLIENT_URL.split(",") : true,
+    origin: process.env.CLIENT_URL ? process.env.CLIENT_URL.split(",") : "*",
     credentials: true,
   })
 );
+
 app.use(express.json());
+
+app.get("/", (req, res) => {
+  res.send("API is running 🚀"); // ✅ added
+});
 
 app.get("/api/health", (req, res) => {
   res.json({ success: true, message: "Donation API is running" });
