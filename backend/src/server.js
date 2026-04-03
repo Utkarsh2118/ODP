@@ -3,10 +3,10 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const connectDB = require("./config/db");
 
-const authRoutes = require("./routes/authRoutes");
-const campaignRoutes = require("./routes/campaignRoutes");
-const donationRoutes = require("./routes/donationRoutes");
-const userRoutes = require("./routes/userRoutes");
+const authRoutes = require("./src/routes/authRoutes");
+const campaignRoutes = require("./src/routes/campaignRoutes");
+const donationRoutes = require("./src/routes/donationRoutes");
+const userRoutes = require("./src/routes/userRoutes");
 
 dotenv.config(); // ✅ FIXED
 
