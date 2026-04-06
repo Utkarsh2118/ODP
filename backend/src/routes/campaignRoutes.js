@@ -15,7 +15,10 @@ const {
 
 const router = express.Router();
 
-router.get("/", catchAsync(getCampaigns));
+// router.get("/", catchAsync(getCampaigns));
+router.get("/", (req, res) => {
+  res.json([{ title: "Working ✅" }]);
+});
 router.get("/admin/stats/summary", protect, authorize("admin"), catchAsync(campaignStats));
 router.get("/:id", campaignIdValidation, validate, catchAsync(getCampaignById));
 
