@@ -9,13 +9,6 @@ const sortFilter = document.getElementById("sort-filter");
 const resetFiltersBtn = document.getElementById("reset-filters");
 const resetAllBtn = document.getElementById("reset-all");
 const emptyState = document.getElementById("empty-state");
-const logoutBtn = document.getElementById("logout-btn");
-const backDashboardBtn = document.getElementById("back-dashboard-btn");
-
-const currentUser = getCurrentUser();
-if (backDashboardBtn && currentUser) {
-  backDashboardBtn.href = currentUser.role === "admin" ? "admin.html" : "dashboard.html";
-}
 
 // State
 let allCampaigns = [];
@@ -242,20 +235,6 @@ resetAllBtn.addEventListener("click", () => {
   searchClear.style.display = "none";
   filterAndSort();
 });
-
-// Logout handler
-if (logoutBtn) {
-  logoutBtn.addEventListener("click", () => {
-    if (!confirm("Are you sure you want to logout?")) return;
-    if (typeof logout === "function") {
-      logout();
-      return;
-    }
-    localStorage.removeItem("odp_token");
-    localStorage.removeItem("odp_user");
-    window.location.href = "auth.html";
-  });
-}
 
 // Load Campaigns
 async function loadCampaigns() {
