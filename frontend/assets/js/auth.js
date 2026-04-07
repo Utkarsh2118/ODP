@@ -36,20 +36,40 @@ function renderNavAuth() {
   if (!navSlot) return;
 
   const isHomePage = document.body.classList.contains("campaigns-page");
+  const user = getCurrentUser();
 
   if (isHomePage) {
+    if (!user) {
+      navSlot.innerHTML = `
+        <a href="auth.html" class="nav-btn" id="login-btn">
+          <i class="fas fa-right-to-bracket"></i> Login
+        </a>
+        <a href="auth.html" class="nav-btn" id="signup-btn">
+          <i class="fas fa-user-plus"></i> Sign Up
+        </a>
+      `;
+      return;
+    }
+
+    const dashboardLink = user.role === "admin" ? "admin.html" : "dashboard.html";
+    const roleClass = user.role === "admin" ? "role-admin" : "role-user";
+    const roleLabel = user.role === "admin" ? "ADMIN" : "USER";
+
     navSlot.innerHTML = `
-      <a href="auth.html" class="nav-btn" id="login-btn">
-        <i class="fas fa-right-to-bracket"></i> Login
+      <span class="role-badge ${roleClass}">${roleLabel}</span>
+      <a class="nav-btn" href="${dashboardLink}">
+        <i class="fas fa-arrow-left"></i> Back to Dashboard
       </a>
-      <a href="auth.html" class="nav-btn nav-logout" id="signup-btn">
-        <i class="fas fa-user-plus"></i> Sign Up
-      </a>
+      <button class="nav-btn nav-logout" id="logout-btn" type="button">
+        <i class="fas fa-right-from-bracket"></i> Logout
+      </button>
     `;
+
+    const logoutBtn = document.getElementById("logout-btn");
+    if (logoutBtn) logoutBtn.addEventListener("click", logout);
     return;
   }
 
-  const user = getCurrentUser();
   const adminLinks = document.querySelectorAll('a[href="admin.html"]');
   const dashboardLinks = document.querySelectorAll('a[href="dashboard.html"]');
 
