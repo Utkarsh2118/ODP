@@ -1,6 +1,6 @@
 const LOCAL_API_BASE_URL = "http://127.0.0.1:5000/api";
-const PROD_API_BASE_URL = "https://odp-wtf2.onrender.com/api";
-
+// const PROD_API_BASE_URL = "https://odp-wtf2.onrender.com/api";
+const PROD_API_BASE_URL = "https://odp-api.onrender.com/api";
 const host = window.location.hostname;
 const isLocalHost = host === "localhost" || host === "127.0.0.1";
 const isGithubPages = host.endsWith("github.io");
