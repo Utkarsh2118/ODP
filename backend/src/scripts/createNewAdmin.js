@@ -17,7 +17,7 @@ const createNewAdmin = async () => {
     console.log("Connected to MongoDB");
 
     // New credentials
-    const newEmail = "Admin2102@1808.com";
+    const newEmail = "myadmin@2118.com";
     const newPassword = "@Ramji2118";
     const name = "Admin";
 
