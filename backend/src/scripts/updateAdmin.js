@@ -27,7 +27,7 @@ const updateAdminCredentials = async () => {
     console.log(`Found admin: ${oldAdmin.email}`);
 
     // New credentials
-    const newEmail = "Admin2102@1808.com";
+    const newEmail = "myadmin@2118.com";
     const newPassword = "@Ramji2118";
 
     // Hash the new password
