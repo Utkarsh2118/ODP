@@ -42,7 +42,8 @@ async function apiRequest(path, options = {}) {
   const data = isJson ? await response.json() : await response.text();
 
   if (!response.ok) {
-    const message = data.message || "Request failed";
+    const validationError = Array.isArray(data?.errors) ? data.errors[0]?.msg : "";
+    const message = validationError || data?.message || "Request failed";
     throw new Error(message);
   }
 

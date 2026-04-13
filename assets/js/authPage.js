@@ -222,16 +222,20 @@ const initializeAuthPage = () => {
       try {
         setLoading(loginBtn, loginLoader, true);
 
-        const response = await apiRequest("/auth/login", {
-          method: "POST",
-          body: JSON.stringify({ email, password }),
-        });
+        // Use local storage instead of API
+        const result = StorageManager.verifyCredentials(email, password);
 
-        saveAuth(response.token, response.user);
+        if (!result.success) {
+          showAuthMessage(loginMsg, result.message || "Login failed", "error");
+          setLoading(loginBtn, loginLoader, false);
+          return;
+        }
+
+        saveAuth("local_token_" + result.user.id, result.user);
         showAuthMessage(loginMsg, "✓ Redirecting to dashboard...", "success");
 
         setTimeout(() => {
-          window.location.href = response.user.role === "admin" ? "admin.html" : "dashboard.html";
+          window.location.href = result.user.role === "admin" ? "admin.html" : "dashboard.html";
         }, 800);
       } catch (error) {
         setLoading(loginBtn, loginLoader, false);
@@ -282,89 +286,62 @@ const initializeAuthPage = () => {
         return;
       }
 
-      try {
-        forgotGenerateBtn.disabled = true;
-        const response = await apiRequest("/auth/forgot-password", {
-          method: "POST",
-          body: JSON.stringify({ email }),
-        });
-
-        // Store email for next steps
-        forgotPasswordState.email = email;
-        forgotPasswordState.step = 2;
-        
-        showAuthMessage(
-          forgotMsg,
-          "✓ OTP sent to your email. Please enter it below.",
-          "success"
-        );
-
-        // Disable email input and enable OTP input
-        forgotEmail.disabled = true;
-        forgotGenerateBtn.textContent = "OTP Sent ✓";
-        if (forgotOtp) forgotOtp.disabled = false;
-
-        // Auto-focus OTP field
-        if (forgotOtp) forgotOtp.focus();
-      } catch (error) {
-        showAuthMessage(forgotMsg, error.message || "Could not send OTP", "error");
-      } finally {
-        forgotGenerateBtn.disabled = false;
+      // Check if user exists in local storage
+      const user = StorageManager.getUserByEmail(email);
+      if (!user) {
+        showAuthMessage(forgotMsg, "Email not found in system", "error");
+        return;
       }
+
+      // Store email for next steps
+      forgotPasswordState.email = email;
+      forgotPasswordState.step = 3; // Skip OTP, go directly to password reset
+      
+      showAuthMessage(
+        forgotMsg,
+        "✓ Email verified. Please enter your new password below.",
+        "success"
+      );
+
+      // Disable email input and show password field
+      forgotEmail.disabled = true;
+      forgotGenerateBtn.textContent = "Email Verified ✓";
+      
+      // Hide OTP section
+      if (forgotOtp) forgotOtp.parentElement.parentElement.style.display = "none";
+      if (document.getElementById("forgot-verify-btn")) document.getElementById("forgot-verify-btn").style.display = "none";
+
+      // Show password field
+      if (forgotNewPassword) {
+        forgotNewPassword.parentElement.parentElement.style.display = "block";
+        forgotNewPassword.disabled = false;
+        forgotNewPassword.focus();
+      }
+      if (forgotResetBtn) forgotResetBtn.style.display = "block";
     });
   }
 
-  // Verify OTP button
+  // Verify OTP button - skip for local storage
   const forgotVerifyBtn = document.getElementById("forgot-verify-btn");
   if (forgotVerifyBtn && forgotOtp) {
     forgotVerifyBtn.addEventListener("click", async (e) => {
       e.preventDefault();
-      clearError(document.getElementById("forgot-otp-error"));
-      clearAuthMessage(forgotMsg);
+      // For local storage, OTP is skipped - show password field directly
+      forgotPasswordState.otpVerified = true;
+      forgotPasswordState.step = 3;
 
-      const otp = forgotOtp.value.trim();
-      const otpErr = validateOtp(otp);
+      showAuthMessage(
+        forgotMsg,
+        "✓ Proceeding to password reset.",
+        "success"
+      );
 
-      if (otpErr) {
-        showError(document.getElementById("forgot-otp-error"), otpErr);
-        return;
-      }
-
-      try {
-        forgotVerifyBtn.disabled = true;
-        const response = await apiRequest("/auth/verify-otp", {
-          method: "POST",
-          body: JSON.stringify({
-            email: forgotPasswordState.email,
-            otp,
-          }),
-        });
-
-        forgotPasswordState.otpVerified = true;
-        forgotPasswordState.step = 3;
-
-        showAuthMessage(
-          forgotMsg,
-          "✓ OTP verified! Now set your new password.",
-          "success"
-        );
-
-        // Disable OTP field and show password field
-        forgotOtp.disabled = true;
-        forgotVerifyBtn.style.display = "none";
-        if (forgotNewPassword) forgotNewPassword.disabled = false;
-        if (forgotResetBtn) forgotResetBtn.style.display = "block";
-        if (forgotNewPassword) forgotNewPassword.focus();
-      } catch (error) {
-        forgotPasswordState.otpVerified = false;
-        showAuthMessage(
-          forgotMsg,
-          error.message || "OTP verification failed. Please try again.",
-          "error"
-        );
-      } finally {
-        forgotVerifyBtn.disabled = false;
-      }
+      // Disable OTP field and show password field
+      forgotOtp.disabled = true;
+      forgotVerifyBtn.style.display = "none";
+      if (forgotNewPassword) forgotNewPassword.disabled = false;
+      if (forgotResetBtn) forgotResetBtn.style.display = "block";
+      if (forgotNewPassword) forgotNewPassword.focus();
     });
   }
 
@@ -374,16 +351,6 @@ const initializeAuthPage = () => {
       clearError(document.getElementById("forgot-new-password-error"));
       clearAuthMessage(forgotMsg);
 
-      if (!forgotPasswordState.otpVerified) {
-        showAuthMessage(
-          forgotMsg,
-          "Please verify your OTP first",
-          "error"
-        );
-        return;
-      }
-
-      const otp = forgotOtp.value.trim();
       const newPassword = forgotNewPassword.value;
       const passwordErr = validatePassword(newPassword);
 
@@ -394,14 +361,20 @@ const initializeAuthPage = () => {
 
       try {
         forgotResetBtn.disabled = true;
-        const response = await apiRequest("/auth/reset-password", {
-          method: "POST",
-          body: JSON.stringify({
-            email: forgotPasswordState.email,
-            otp,
-            newPassword,
-          }),
-        });
+
+        // Use local storage to update password
+        const user = StorageManager.getUserByEmail(forgotPasswordState.email);
+        if (!user) {
+          showAuthMessage(forgotMsg, "User not found", "error");
+          return;
+        }
+
+        const result = StorageManager.updateUser(user.id, { password: newPassword });
+
+        if (!result.success) {
+          showAuthMessage(forgotMsg, result.message || "Could not reset password", "error");
+          return;
+        }
 
         showAuthMessage(
           forgotMsg,
@@ -527,12 +500,16 @@ const initializeAuthPage = () => {
       try {
         setLoading(regBtn, regLoader, true);
 
-        const response = await apiRequest("/auth/register", {
-          method: "POST",
-          body: JSON.stringify({ name, email, password }),
-        });
+        // Use local storage instead of API
+        const result = StorageManager.addUser({ name, email, password });
 
-        saveAuth(response.token, response.user);
+        if (!result.success) {
+          showAuthMessage(regMsg, result.message || "Registration failed", "error");
+          setLoading(regBtn, regLoader, false);
+          return;
+        }
+
+        saveAuth("local_token_" + result.user.id, result.user);
         showAuthMessage(regMsg, "✓ Account created! Redirecting...", "success");
 
         setTimeout(() => {
