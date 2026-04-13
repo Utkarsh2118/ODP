@@ -11,28 +11,11 @@ const StorageManager = (() => {
   };
 
   /**
-   * Initialize storage with default admin user if not exists
+   * Initialize storage bucket for users
    */
   const initialize = () => {
     if (!localStorage.getItem(STORAGE_KEYS.USERS)) {
       localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify([]));
-    }
-
-    // Check if admin exists
-    const users = getAllUsers();
-    const adminExists = users.some((user) => user.role === "admin");
-
-    if (!adminExists) {
-      // Create default admin
-      const defaultAdmin = {
-        id: generateId(),
-        name: "Admin",
-        email: "Admin2102@1808.com",
-        password: hashPassword("@Ramji2118"), // Simple hash
-        role: "admin",
-        createdAt: new Date().toISOString(),
-      };
-      addUser(defaultAdmin);
     }
   };
 
@@ -274,6 +257,8 @@ const StorageManager = (() => {
    */
   const clearAll = () => {
     localStorage.removeItem(STORAGE_KEYS.USERS);
+    localStorage.removeItem("odp_token");
+    localStorage.removeItem("odp_user");
     initialize();
     return { success: true, message: "All data cleared" };
   };
