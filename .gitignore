@@ -1,0 +1,18 @@
+
+node_modules/
+package-lock.json
+
+# Env files
+.env
+backend/.env
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+
