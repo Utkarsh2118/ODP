@@ -42,8 +42,59 @@ let filteredCampaigns = [];
 let allDonations = [];
 let campaignPage = 1;
 const campaignsPerPage = 6;
+const LOCAL_KEYS = {
+  CAMPAIGNS: "odp_campaigns",
+  DONATIONS: "odp_donations",
+};
+
+let adminDataMode = "api";
+let localModeToastShown = false;
 
 const formatAmount = (amount) => `INR ${Number(amount || 0).toLocaleString()}`;
+
+const isConnectivityError = (error) => {
+  const message = String(error?.message || "").toLowerCase();
+  return message.includes("cannot reach backend api") || message.includes("timed out");
+};
+
+const generateLocalId = (prefix = "id") =>
+  `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+
+const getLocalCampaigns = () => {
+  const raw = localStorage.getItem(LOCAL_KEYS.CAMPAIGNS);
+  const campaigns = raw ? JSON.parse(raw) : [];
+  return campaigns.map((campaign) => ({
+    _id: campaign._id || campaign.id || generateLocalId("cmp"),
+    title: campaign.title || "Untitled Campaign",
+    description: campaign.description || "",
+    goalAmount: Number(campaign.goalAmount || 0),
+    fundsRaised: Number(campaign.fundsRaised || 0),
+    imageUrl: campaign.imageUrl || "",
+    isActive: campaign.isActive !== false,
+    createdAt: campaign.createdAt || new Date().toISOString(),
+  }));
+};
+
+const saveLocalCampaigns = (campaigns) => {
+  localStorage.setItem(LOCAL_KEYS.CAMPAIGNS, JSON.stringify(campaigns));
+};
+
+const getLocalDonations = () => {
+  const raw = localStorage.getItem(LOCAL_KEYS.DONATIONS);
+  return raw ? JSON.parse(raw) : [];
+};
+
+const saveLocalDonations = (donations) => {
+  localStorage.setItem(LOCAL_KEYS.DONATIONS, JSON.stringify(donations));
+};
+
+const switchToLocalMode = () => {
+  adminDataMode = "local";
+  if (!localModeToastShown) {
+    localModeToastShown = true;
+    showToast("Backend offline. Using local data mode.", "error");
+  }
+};
 
 const escapeHtml = (value) =>
   String(value ?? "")
@@ -201,21 +252,38 @@ const applyCampaignFilters = () => {
 
 async function loadCampaigns() {
   try {
-    const data = await apiRequest("/campaigns");
-    allCampaigns = data.campaigns || [];
+    if (adminDataMode === "local") {
+      allCampaigns = getLocalCampaigns();
+    } else {
+      const data = await apiRequest("/campaigns");
+      allCampaigns = data.campaigns || [];
+    }
     filteredCampaigns = [...allCampaigns];
     renderCampaignRows();
     renderAnalyticsBars();
     updateOverview();
   } catch (error) {
+    if (isConnectivityError(error)) {
+      switchToLocalMode();
+      allCampaigns = getLocalCampaigns();
+      filteredCampaigns = [...allCampaigns];
+      renderCampaignRows();
+      renderAnalyticsBars();
+      updateOverview();
+      return;
+    }
     campaignsTable.innerHTML = `<tr><td colspan='5' class='message error'>${escapeHtml(error.message)}</td></tr>`;
   }
 }
 
 async function loadDonations() {
   try {
-    const data = await apiRequest("/donations/admin/all");
-    allDonations = data.donations || [];
+    if (adminDataMode === "local") {
+      allDonations = getLocalDonations();
+    } else {
+      const data = await apiRequest("/donations/admin/all");
+      allDonations = data.donations || [];
+    }
 
     const statusBadge = (status) => {
       if (status === "success") return '<span class="status-pill status-active">Success</span>';
@@ -254,6 +322,31 @@ async function loadDonations() {
 
     updateOverview();
   } catch (error) {
+    if (isConnectivityError(error)) {
+      switchToLocalMode();
+      allDonations = getLocalDonations();
+      donationsTable.innerHTML =
+        allDonations
+          .map(
+            (donation) => `
+      <tr>
+        <td>${escapeHtml(donation.user?.name || "-")}</td>
+        <td>${escapeHtml(donation.campaign?.title || "-")}</td>
+        <td>${formatAmount(donation.amount)}</td>
+        <td>${new Date(donation.donatedAt || donation.createdAt || Date.now()).toLocaleString()}</td>
+        <td>
+          ${(donation.paymentMode || "manual_qr") === "manual_qr" ? "Manual QR" : "Razorpay"}<br />
+          <small>${escapeHtml(donation.payerReference || donation.razorpayPaymentId || "-")}</small>
+        </td>
+        <td><span class="status-pill ${donation.status === "success" ? "status-active" : donation.status === "pending" ? "status-pending" : "status-inactive"}">${escapeHtml((donation.status || "pending").toUpperCase())}</span></td>
+        <td><span class="muted">Local mode</span></td>
+      </tr>
+    `
+          )
+          .join("") || "<tr><td colspan='7' class='muted text-center'>No donations yet.</td></tr>";
+      updateOverview();
+      return;
+    }
     donationsTable.innerHTML = `<tr><td colspan='7' class='message error'>${escapeHtml(error.message)}</td></tr>`;
   }
 }
@@ -263,14 +356,41 @@ window.reviewDonation = async function reviewDonation(donationId, action) {
   if (!window.confirm(confirmMsg)) return;
 
   try {
-    await apiRequest(`/donations/admin/${donationId}/review`, {
-      method: "PATCH",
-      body: JSON.stringify({ action }),
-    });
+    if (adminDataMode === "local") {
+      const donations = getLocalDonations();
+      const donationIndex = donations.findIndex((donation) => donation._id === donationId || donation.id === donationId);
+      if (donationIndex === -1) throw new Error("Donation not found");
+
+      const donation = donations[donationIndex];
+      donation.status = action === "approve" ? "success" : "rejected";
+      donations[donationIndex] = donation;
+      saveLocalDonations(donations);
+
+      if (action === "approve") {
+        const campaigns = getLocalCampaigns();
+        const campaignId = donation.campaign?._id || donation.campaign?.id || donation.campaignId;
+        const campaignIndex = campaigns.findIndex((campaign) => campaign._id === campaignId || campaign.id === campaignId);
+        if (campaignIndex >= 0) {
+          campaigns[campaignIndex].fundsRaised =
+            Number(campaigns[campaignIndex].fundsRaised || 0) + Number(donation.amount || 0);
+          saveLocalCampaigns(campaigns);
+        }
+      }
+    } else {
+      await apiRequest(`/donations/admin/${donationId}/review`, {
+        method: "PATCH",
+        body: JSON.stringify({ action }),
+      });
+    }
     showToast(action === "approve" ? "Donation approved" : "Donation rejected");
     await loadDonations();
     await loadCampaigns();
   } catch (error) {
+    if (isConnectivityError(error)) {
+      switchToLocalMode();
+      await window.reviewDonation(donationId, action);
+      return;
+    }
     window.alert(error.message);
   }
 };
@@ -280,12 +400,24 @@ window.deleteCampaign = async function deleteCampaign(campaignId) {
   if (!confirmDelete) return;
 
   try {
-    await apiRequest(`/campaigns/${campaignId}`, {
-      method: "DELETE",
-    });
+    if (adminDataMode === "local") {
+      const campaigns = getLocalCampaigns().filter(
+        (campaign) => campaign._id !== campaignId && campaign.id !== campaignId
+      );
+      saveLocalCampaigns(campaigns);
+    } else {
+      await apiRequest(`/campaigns/${campaignId}`, {
+        method: "DELETE",
+      });
+    }
     showToast("Campaign deleted");
     await loadCampaigns();
   } catch (error) {
+    if (isConnectivityError(error)) {
+      switchToLocalMode();
+      await window.deleteCampaign(campaignId);
+      return;
+    }
     window.alert(error.message);
   }
 };
@@ -318,18 +450,43 @@ window.editCampaign = async function editCampaign(
   const newImage = window.prompt("Image URL (optional)", imageUrl || "") || "";
 
   try {
-    await apiRequest(`/campaigns/${campaignId}`, {
-      method: "PUT",
-      body: JSON.stringify({
+    if (adminDataMode === "local") {
+      const campaigns = getLocalCampaigns();
+      const campaignIndex = campaigns.findIndex(
+        (campaign) => campaign._id === campaignId || campaign.id === campaignId
+      );
+
+      if (campaignIndex === -1) {
+        throw new Error("Campaign not found");
+      }
+
+      campaigns[campaignIndex] = {
+        ...campaigns[campaignIndex],
         title: newTitle,
         description: newDescription,
         goalAmount: newGoal,
         imageUrl: newImage,
-      }),
-    });
+      };
+      saveLocalCampaigns(campaigns);
+    } else {
+      await apiRequest(`/campaigns/${campaignId}`, {
+        method: "PUT",
+        body: JSON.stringify({
+          title: newTitle,
+          description: newDescription,
+          goalAmount: newGoal,
+          imageUrl: newImage,
+        }),
+      });
+    }
     showToast("Campaign updated");
     await loadCampaigns();
   } catch (error) {
+    if (isConnectivityError(error)) {
+      switchToLocalMode();
+      await window.editCampaign(campaignId, titleEncoded, goalAmount, descriptionEncoded, imageUrlEncoded);
+      return;
+    }
     window.alert(error.message);
   }
 };
@@ -432,10 +589,25 @@ if (campaignForm) {
 
     try {
       setCreateLoading(true);
-      await apiRequest("/campaigns", {
-        method: "POST",
-        body: JSON.stringify({ title, description, goalAmount, imageUrl }),
-      });
+      if (adminDataMode === "local") {
+        const campaigns = getLocalCampaigns();
+        campaigns.unshift({
+          _id: generateLocalId("cmp"),
+          title,
+          description,
+          goalAmount,
+          fundsRaised: 0,
+          imageUrl,
+          isActive: true,
+          createdAt: new Date().toISOString(),
+        });
+        saveLocalCampaigns(campaigns);
+      } else {
+        await apiRequest("/campaigns", {
+          method: "POST",
+          body: JSON.stringify({ title, description, goalAmount, imageUrl }),
+        });
+      }
 
       campaignForm.reset();
       imagePreview.removeAttribute("src");
@@ -446,6 +618,12 @@ if (campaignForm) {
       showToast("Campaign Created", "success");
       await loadCampaigns();
     } catch (error) {
+      if (isConnectivityError(error)) {
+        switchToLocalMode();
+        setCreateLoading(false);
+        campaignForm.dispatchEvent(new Event("submit", { cancelable: true }));
+        return;
+      }
       showMessage(campaignMessage, error.message, "error");
       showToast(error.message, "error");
     } finally {
