@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Admin User Management Page
  */
 
@@ -27,19 +27,28 @@ function showMessage(text, type = "success") {
  * Load and display all users
  */
 function loadUsers() {
-  allUsers = StorageManager.getAllUsers();
-  renderUsers(allUsers);
-  updateStats();
+  apiRequest("/user/admin/users")
+    .then((data) => {
+      allUsers = Array.isArray(data.users) ? data.users : [];
+      renderUsers(allUsers);
+      updateStats();
+    })
+    .catch((error) => {
+      showMessage(error.message || "Unable to load users", "error");
+      renderUsers([]);
+      updateStats();
+    });
 }
 
 /**
  * Update statistics
  */
 function updateStats() {
-  const stats = StorageManager.getStats();
-  document.getElementById("stat-total").textContent = stats.totalUsers;
-  document.getElementById("stat-admins").textContent = stats.adminCount;
-  document.getElementById("stat-regular").textContent = stats.userCount;
+  const adminCount = allUsers.filter((user) => user.role === "admin").length;
+  const userCount = allUsers.filter((user) => user.role === "user").length;
+  document.getElementById("stat-total").textContent = allUsers.length;
+  document.getElementById("stat-admins").textContent = adminCount;
+  document.getElementById("stat-regular").textContent = userCount;
 }
 
 /**
@@ -106,7 +115,7 @@ function searchUsers() {
  */
 function openEditModal(userId) {
   currentEditingUserId = userId;
-  const user = StorageManager.getUserById(userId);
+  const user = allUsers.find((entry) => String(entry.id) === String(userId));
 
   if (!user) {
     showMessage("User not found", "error");
@@ -154,16 +163,18 @@ function saveUserChanges() {
     updates.password = password;
   }
 
-  const result = StorageManager.updateUser(currentEditingUserId, updates);
-
-  if (!result.success) {
-    showMessage(result.message || "Error updating user", "error");
-    return;
-  }
-
-  showMessage("User updated successfully", "success");
-  closeEditModal();
-  loadUsers();
+  apiRequest(`/user/admin/users/${currentEditingUserId}`, {
+    method: "PUT",
+    body: JSON.stringify(updates),
+  })
+    .then((result) => {
+      showMessage(result.message || "User updated successfully", "success");
+      closeEditModal();
+      loadUsers();
+    })
+    .catch((error) => {
+      showMessage(error.message || "Error updating user", "error");
+    });
 }
 
 /**
@@ -199,16 +210,17 @@ function confirmDelete() {
     return;
   }
 
-  const result = StorageManager.deleteUser(currentDeletingUserId);
-
-  if (!result.success) {
-    showMessage(result.message || "Error deleting user", "error");
-    return;
-  }
-
-  showMessage("User deleted successfully", "success");
-  closeDeleteModal();
-  loadUsers();
+  apiRequest(`/user/admin/users/${currentDeletingUserId}`, {
+    method: "DELETE",
+  })
+    .then((result) => {
+      showMessage(result.message || "User deleted successfully", "success");
+      closeDeleteModal();
+      loadUsers();
+    })
+    .catch((error) => {
+      showMessage(error.message || "Error deleting user", "error");
+    });
 }
 
 /**

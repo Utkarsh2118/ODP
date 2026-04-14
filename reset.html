@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Reset Storage - DonateSphere Admin</title>
+    <title>Admin Bootstrap - DonateSphere</title>
     <style>
       * {
         margin: 0;
@@ -42,6 +42,10 @@
         border-radius: 8px;
         margin-bottom: 1.5rem;
         border-left: 4px solid #3498db;
+      }
+
+      .info-box p + p {
+        margin-top: 0.8rem;
       }
 
       .info-box p {
@@ -168,32 +172,36 @@
       .stat-item strong {
         color: #0f766e;
       }
+
+      .form-hint {
+        margin-top: 0.5rem;
+        color: #7f8c8d;
+        font-size: 13px;
+      }
     </style>
   </head>
   <body>
     <div class="container">
-      <h1>🔄 Storage Reset</h1>
+      <h1>≡ƒöÉ Admin Bootstrap</h1>
 
       <div class="info-box">
         <p>
-          <strong>Clear all data:</strong> This will delete all users and data
-          from localStorage.
+          <strong>Browser session:</strong> This clears only the local login session in your browser.
         </p>
-        <p style="margin-top: 0.8rem;">
-          <strong>Create new admin:</strong> After clearing, set up a fresh
-          admin account with your credentials.
+        <p>
+          <strong>Backend data:</strong> User accounts now live in MongoDB Atlas, so this page does not wipe the database.
         </p>
       </div>
 
       <!-- Stats -->
       <div class="stats" id="stats">
         <div class="stat-item">
-          <span>Total Users:</span>
-          <strong id="stat-users">0</strong>
+          <span>Session Status:</span>
+          <strong id="stat-users">Signed out</strong>
         </div>
         <div class="stat-item">
-          <span>Data Size:</span>
-          <strong id="stat-size">0 KB</strong>
+          <span>Storage Mode:</span>
+          <strong id="stat-size">MongoDB Atlas</strong>
         </div>
       </div>
 
@@ -224,8 +232,18 @@
         />
       </div>
 
+      <div class="form-group">
+        <label for="admin-secret">Admin Bootstrap Secret</label>
+        <input
+          type="password"
+          id="admin-secret"
+          placeholder="Set in backend environment variables"
+        />
+        <p class="form-hint">This must match `ADMIN_BOOTSTRAP_SECRET` on Render.</p>
+      </div>
+
       <div class="button-group">
-        <button class="btn-clear" id="clear-btn">Clear All Data</button>
+        <button class="btn-clear" id="clear-btn">Clear Browser Session</button>
         <button class="btn-create" id="create-btn">Create Admin</button>
         <button class="btn-secondary" id="finish-btn">Done & Go to Login</button>
       </div>
@@ -233,7 +251,8 @@
       <div id="message" class="message"></div>
     </div>
 
-    <script src="assets/js/localStorage.js"></script>
+    <script src="assets/js/config.js"></script>
+    <script src="assets/js/api.js"></script>
     <script>
       /**
        * Show message
@@ -248,36 +267,33 @@
        * Update stats
        */
       function updateStats() {
-        const users = StorageManager.getAllUsers();
-        const rawUsers = localStorage.getItem("odp_users") || "[]";
-        const storageSize = new Blob([rawUsers]).size;
+        const token = localStorage.getItem("odp_token");
+        const user = localStorage.getItem("odp_user");
 
-        document.getElementById("stat-users").textContent = users.length;
-        document.getElementById("stat-size").textContent = (storageSize / 1024).toFixed(2);
+        document.getElementById("stat-users").textContent = token && user ? "Signed in" : "Signed out";
+        document.getElementById("stat-size").textContent = "MongoDB Atlas";
       }
 
       /**
-       * Clear all data
+       * Clear browser session
        */
       document.getElementById("clear-btn").addEventListener("click", () => {
-        if (!confirm("Are you sure? This will delete ALL users and data!")) {
-          return;
-        }
-
-        StorageManager.clearAll();
-        showMessage("✓ All data cleared successfully!", "success");
+        localStorage.removeItem("odp_token");
+        localStorage.removeItem("odp_user");
+        showMessage("Γ£ô Browser session cleared successfully!", "success");
         updateStats();
       });
 
       /**
        * Create new admin
        */
-      document.getElementById("create-btn").addEventListener("click", () => {
+      document.getElementById("create-btn").addEventListener("click", async () => {
         const name = document.getElementById("admin-name").value.trim();
         const email = document.getElementById("admin-email").value.trim();
         const password = document.getElementById("admin-password").value;
+        const adminSecret = document.getElementById("admin-secret").value;
 
-        if (!name || !email || !password) {
+        if (!name || !email || !password || !adminSecret) {
           showMessage("Please fill in all fields", "error");
           return;
         }
@@ -287,28 +303,25 @@
           return;
         }
 
-        // First clear all data
-        StorageManager.clearAll();
+        try {
+          await apiRequest("/auth/seed-admin", {
+            method: "POST",
+            body: JSON.stringify({
+              name,
+              email,
+              password,
+              adminSecret,
+            }),
+          });
 
-        // Create new admin
-        const result = StorageManager.addUser({
-          name,
-          email,
-          password,
-          role: "admin",
-        });
-
-        if (!result.success) {
-          showMessage(result.message || "Error creating admin", "error");
-          return;
+          showMessage(
+            `Γ£ô Admin created successfully!\n\nEmail: ${email}\nPassword: ${password}`,
+            "success"
+          );
+          updateStats();
+        } catch (error) {
+          showMessage(error.message || "Error creating admin", "error");
         }
-
-        showMessage(
-          `✓ Admin created successfully!\n\nEmail: ${email}\nPassword: ${password}`,
-          "success"
-        );
-
-        updateStats();
       });
 
       /**
